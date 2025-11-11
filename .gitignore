@@ -86,3 +86,13 @@ typings/
 
 # DynamoDB Local files
 .dynamodb/
+
+*.exe
+
+*.db
+
+*.db-shm
+
+*.db-wal
+
+main
