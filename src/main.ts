@@ -1,6 +1,6 @@
 import { env } from "bun";
 import { BunSqliteKeyValue } from "bun-sqlite-key-value";
-import { PrinterState, PrinterStatus } from "./types";
+import { PrinterState, PrinterStatus, PrinterJob } from "./types";
 
 const kv = new BunSqliteKeyValue("./kv.db");
 
@@ -14,9 +14,13 @@ async function main() {
 		switch (status.state) {
 			case PrinterState.PRINTING:
 				if (lastState !== PrinterState.PRINTING) {
-					await sendSimpleWebhook("🖨️ Rozpoczynam druk!");
+					const job = await getJob();
+					await sendSimpleWebhook(`🖨️ Rozpoczynam drukowanie \`${job.file.display_name}\`.\nCzas drukowania: ${Math.ceil(job.time_remaining / 60)} minut`);
+					await kv.set("lastState", PrinterState.PRINTING);
+					await kv.set("lastJobId", job.id);
+					await kv.set("lastJobName", job.file.display_name);
+					await kv.set("lastJobThumbnail", job.file.refs.thumbnail);
 				}
-				await kv.set("lastState", PrinterState.PRINTING);
 				break;
 
 			case PrinterState.PAUSED:
@@ -28,7 +32,8 @@ async function main() {
 
 			case PrinterState.FINISHED:
 				if (lastState !== PrinterState.FINISHED) {
-					await sendSimpleWebhook("✅ Druk zakończony pomyślnie!");
+					const lastJobName = (await kv.get("lastJobName")) as string | null;
+					await sendSimpleWebhook(`✅ Druk ${lastJobName ? `\`${lastJobName}\`` : ""} został zakończony pomyślnie!`);
 				}
 				await kv.set("lastState", PrinterState.FINISHED);
 				break;
@@ -36,7 +41,7 @@ async function main() {
 			case PrinterState.ERROR:
 			case PrinterState.ATTENTION:
 				if (lastState !== status.state) {
-					await sendSimpleWebhook(`⚠️ Uwaga! Wystąpił problem: ${status.statusPrinter?.message || "Nieznany błąd."}`);
+					await sendSimpleWebhook(`⚠️ Uwaga! Wystąpił problem: ${status.statusPrinter?.message || "Nieznany błąd."}\nSprawdź drukarkę!`);
 				}
 				await kv.set("lastState", status.state);
 				break;
@@ -68,6 +73,19 @@ async function getStatus() {
 	return res.printer;
 }
 
+async function getJob() {
+	const req = await fetch(`${env.PRUSALINK_API_URL}/api/v1/job`, {
+		headers: {
+			"X-Api-Key": env.PRUSALINK_API_KEY || "",
+		},
+	});
+	if (!req.ok) {
+		throw new Error(`Failed to fetch printer status: ${req.status} ${req.statusText}`);
+	}
+	const res = (await req.json()) as PrinterJob;
+	return res;
+}
+
 async function sendSimpleWebhook(message: string) {
 	const req = await fetch(env.WEBHOOK_URL || "", {
 		method: "POST",
@@ -83,5 +101,47 @@ async function sendSimpleWebhook(message: string) {
 		throw new Error(`Failed to send webhook: ${req.status} ${req.statusText}`);
 	}
 }
+
+const exampleJob = {
+	id: 291,
+	state: "PRINTING",
+	progress: 0.0,
+	time_remaining: 33660,
+	time_printing: 938,
+	file: {
+		refs: { icon: "/thumb/s/usb/LBANDH~2.BGC", thumbnail: "/thumb/l/usb/LBANDH~2.BGC", download: "/usb/LBANDH~2.BGC" },
+		name: "LBANDH~2.BGC",
+		display_name: "L Band helix radome_0.4n_0.1mm_PETG_COREONE_9h23m.bgcode",
+		path: "/usb",
+		size: 1229184,
+		m_timestamp: 1762907189,
+	},
+};
+
+const exampleStatus = {
+	job: {
+		id: 291,
+		progress: 0.0,
+		time_remaining: 33660,
+		time_printing: 943,
+	},
+	storage: {
+		path: "/usb/",
+		name: "usb",
+		read_only: false,
+	},
+	printer: {
+		state: "PRINTING",
+		temp_bed: 84.8,
+		target_bed: 85.0,
+		temp_nozzle: 250.0,
+		target_nozzle: 250.0,
+		axis_z: 0.2,
+		flow: 100,
+		speed: 100,
+		fan_hotend: 8315,
+		fan_print: 0,
+	},
+};
 
 main();

@@ -32,3 +32,23 @@ export interface PrinterStatus {
 		message: string;
 	};
 }
+
+export interface PrinterJob {
+	id: number;
+	state: PrinterState;
+	progress: number;
+	time_remaining: number;
+	time_printing: number;
+	file: {
+		refs: {
+			icon: string;
+			thumbnail: string;
+			download: string;
+		};
+		name: string;
+		display_name: string;
+		path: string;
+		size: number;
+		m_timestamp: number;
+	};
+}
