@@ -51,6 +51,7 @@ async function main() {
 				break;
 
 			case PrinterState.IDLE:
+			case PrinterState.STOPPED:
 				if (lastState !== PrinterState.IDLE) {
 					console.debug(`Current State: ${status.state}\nLast State: ${lastState}`);
 					await sendSimpleWebhook("🛑 Drukarka jest teraz bezczynna.");
