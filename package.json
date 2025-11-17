@@ -6,7 +6,7 @@
 	"scripts": {
 		"dev": "bun --watch src/main.ts",
 		"build": "bun build src/main.ts --compile",
-    "buildpi": "bun build src/main.ts --target=bun-linux-arm64 --compile"
+		"buildpi": "bun build src/main.ts --target=bun-linux-arm64 --compile --outfile=prusalink"
 	},
 	"devDependencies": {
 		"@types/bun": "^1.3.2"
