@@ -50,19 +50,19 @@ async function main() {
 				await kv.set("lastState", PrinterState.ATTENTION);
 				break;
 
-			case PrinterState.IDLE:
-			case PrinterState.STOPPED:
-				if (lastState !== PrinterState.IDLE) {
-					console.debug(`Current State: ${status.state}\nLast State: ${lastState}`);
-					await sendSimpleWebhook("🛑 Drukarka jest teraz bezczynna.");
-				}
-				await kv.set("lastState", PrinterState.IDLE);
-				break;
-
-			default:
-				await kv.set("lastState", status.state);
-				console.debug(`Current State: ${status.state}\nLast State: ${lastState}`);
-				break;
+			//			case PrinterState.IDLE:
+			//			case PrinterState.STOPPED:
+			//				if (lastState !== PrinterState.IDLE) {
+			//					console.debug(`Current State: ${status.state}\nLast State: ${lastState}`);
+			//					await sendSimpleWebhook("💤 Drukarka jest teraz bezczynna.");
+			//				}
+			//				await kv.set("lastState", PrinterState.IDLE);
+			//				break;
+			//
+			//			default:
+			//				await kv.set("lastState", status.state);
+			//				console.debug(`Current State: ${status.state}\nLast State: ${lastState}`);
+			//				break;
 		}
 	}, parseInt(env.DELAY_MS || "60000"));
 }
