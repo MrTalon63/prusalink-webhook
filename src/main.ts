@@ -16,7 +16,8 @@ async function main() {
 				if (lastState !== PrinterState.PRINTING) {
 					const job = await getJob();
 					console.debug(`Current State: ${status.state}\nLast State: ${lastState}`);
-					await sendSimpleWebhook(`🖨️ Rozpoczynam drukowanie \`${job.file.display_name}\`.\nCzas drukowania: ${await parseMilliseconds(job.time_remaining)} minut`);
+					console.debug(`Remaining time (s): ${job.time_remaining}\nParsed: ${await parseSeconds(job.time_remaining)}`);
+					await sendSimpleWebhook(`🖨️ Rozpoczynam drukowanie \`${job.file.display_name}\`.\nCzas drukowania: ${await parseSeconds(job.time_remaining)} minut`);
 					await kv.set("lastState", PrinterState.PRINTING);
 					await kv.set("lastJobId", job.id);
 					await kv.set("lastJobName", job.file.display_name);
@@ -111,11 +112,11 @@ async function sendSimpleWebhook(message: string) {
 	console.info(`Webhook sent: ${message}`);
 }
 
-async function parseMilliseconds(ms: number) {
-	const days = Math.floor(ms / 86400000);
-	const hours = Math.floor(ms / 3600000) % 24;
-	const minutes = Math.floor(ms / 60000) % 60;
-	const seconds = Math.floor(ms / 1000) % 60;
+async function parseSeconds(sec: number) {
+	const seconds = sec % 60;
+	const minutes = Math.floor((sec % 3600) / 60);
+	const hours = Math.floor((sec % 86400) / 3600);
+	const days = Math.floor(sec / 86400);
 	const time = { days, hours, minutes, seconds };
 
 	// @ts-expect-error TypeScript doesn't know about Intl.DurationFormat yet
