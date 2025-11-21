@@ -17,7 +17,7 @@ async function main() {
 					const job = await getJob();
 					console.debug(`Current State: ${status.state}\nLast State: ${lastState}`);
 					console.debug(`Remaining time (s): ${job.time_remaining}\nParsed: ${await parseSeconds(job.time_remaining)}`);
-					await sendSimpleWebhook(`🖨️ Rozpoczynam drukowanie \`${job.file.display_name}\`.\nCzas drukowania: ${await parseSeconds(job.time_remaining)} minut`);
+					await sendSimpleWebhook(`🖨️ Rozpoczynam drukowanie \`${job.file.display_name}\`.\nCzas drukowania: ${await parseSeconds(job.time_remaining)}`);
 					await kv.set("lastState", PrinterState.PRINTING);
 					await kv.set("lastJobId", job.id);
 					await kv.set("lastJobName", job.file.display_name);
